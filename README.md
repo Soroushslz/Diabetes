@@ -9,7 +9,7 @@
 
 ## 📌 Overview
 
-Diabetes is a life-threatening chronic condition with the potential to cause heart disease, nerve damage, and organ failure. Early and efficient diagnosis of **Type 2 Diabetes** is essential for preventing complications. This project introduces a **low-complexity deep learning model**—a 1D Convolutional Neural Network (CNN)—that offers high accuracy and can be embedded in **wearable devices** or **IoT-based health monitoring systems**.
+Diabetes is a life-threatening chronic condition with the potential to cause heart disease, nerve damage, and organ failure. Early and efficient diagnosis of **Type 2 Diabetes** is essential for preventing complications. This project introduces a **low-complexity deep learning model** a 1D Convolutional Neural Network (CNN) that offers high accuracy and can be embedded in **wearable devices** or **IoT-based health monitoring systems**.
 
 ---
 
