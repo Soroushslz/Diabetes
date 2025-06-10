@@ -1,0 +1,77 @@
+import tensorflow as tf
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.preprocessing import StandardScaler
+
+# Load the dataset
+data = pd.read_csv("pimadiabetes.csv")
+
+# Replace missing values with the mean
+data = data.fillna(data.mean())
+
+# Split the data
+X = data.drop(columns=["Outcome"])
+Y = data["Outcome"]
+
+# Split the data into training and testing sets
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=None)
+
+# Scale the data
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+ni = 8 # number of features
+nf = 64 # number of filters
+nk = 5 # size of kernel
+ns = 10 # number of samples
+n1 = 2 # number of first hidden layer
+n2 = 2 # number of second hidden layer
+no = 1 # number of output units
+
+# Define the CNN+MLP model
+model_cnn_mlp = tf.keras.Sequential([
+    tf.keras.layers.Conv1D(filters = nf, kernel_size = nk, activation = 'relu', input_shape = (ni, 1)),
+    tf.keras.layers.MaxPooling1D(pool_size = 3),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(n1, activation='relu'),
+    tf.keras.layers.Dense(n2, activation='relu'),
+    tf.keras.layers.Dense(no, activation='sigmoid')
+])
+model_cnn_mlp.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), metrics=['accuracy'])
+
+# Define the K-fold cross-validator
+kfold = KFold(n_splits=10, shuffle=True, random_state=None)
+
+# Train and evaluate the CNN+MLP model by cross-validation
+accuracy_scores = []
+for train_idx, test_idx in kfold.split(X):
+    X_train, X_test = X[train_idx], X[test_idx]
+    Y_train, Y_test = Y[train_idx], Y[test_idx]
+
+    # Reshape the data for the CNN+MLP model
+    X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+    X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+    
+    # Define the early stopping callback
+    early_stopping = tf.keras.callbacks.EarlyStopping(patience=150, monitor='val_loss', restore_best_weights=True)
+
+    # Train the CNN+MLP model
+    history_cnn_mlp = model_cnn_mlp.fit(X_train, Y_train, epochs=200, batch_size=64, 
+                                        validation_data=(X_test, Y_test), verbose=0, callbacks=[early_stopping]) # type: ignore
+
+    # Evaluate the CNN+MLP model on the test data
+    loss_cnn_mlp, acc_cnn_mlp = model_cnn_mlp.evaluate(X_test, Y_test)
+    accuracy_scores.append(acc_cnn_mlp)
+
+# Calculate mean and standard deviation of the accuracy scores
+mean_accuracy = np.mean(accuracy_scores)
+std_accuracy = np.std(accuracy_scores)
+
+# calculate the complexity of CNN+MLP model
+CCNN_MLP = ni * nf * nk * (ns - nk + 1) + (ns - nk + 1) * nf * n1 + n1 * n2 + n2 * no
+print('Complexity of the CNN+MLP:', CCNN_MLP)
+
+# Accuracy of CNN+MLP model with cross-validation
+print("Accuracy of CNN+MLP model with cross-validation: {:.2f}%".format(mean_accuracy*100, std_accuracy*100)) # type: ignore
